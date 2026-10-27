@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="SOBERA: Inteligência em Saúde para a gestão da Atenção Primária à Saúde." />
+    <title>SOBERA: Inteligência em Saúde</title>
+    <script>
+      // Restaura a rota encaminhada pela página 404 do GitHub Pages.
+      (() => {
+        const url = new URL(window.location.href)
+        const rota = url.searchParams.get('__sobera_rota')
+        const base = '/sobera/'
+        if (rota && rota.startsWith(base) && !rota.startsWith('//')) {
+          window.history.replaceState(null, '', rota)
+        }
+      })()
+    </script>
+    <script type="module" crossorigin src="/sobera/assets/index-DMgLgzfF.js"></script>
+    <link rel="stylesheet" crossorigin href="/sobera/assets/index-BS7hQ-4s.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
