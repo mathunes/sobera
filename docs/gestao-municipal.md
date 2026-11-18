@@ -77,7 +77,7 @@ O topbar inclui menu de usuário com Meu perfil e Sair. Nome e e-mail podem ser 
 
 A visão geral inclui um carrossel manual de insights, com evidência, interpretação e próxima verificação. O motor em `lib/c1-insights.ts` usa regras determinísticas do C1; nenhum provedor de IA está conectado. A interface informa essa condição. O botão Gerar plano de ação abre um rascunho da intervenção para revisão e atribuição de responsável/prazo; não salva automaticamente. Uma ação já aberta para a mesma prioridade é reaproveitada.
 
-O gráfico C1 por equipe complementa as séries de evolução e volumes. Equipes sem resultado não recebem uma barra de zero.
+O gráfico Mais acesso (C1) por equipe complementa as séries de evolução e volumes. Equipes sem resultado não recebem uma barra de zero.
 
 Na base de exemplo, os nomes das unidades Geribá, Ferradura e Cem Braças foram baseados nesta [publicação da Prefeitura de Búzios de setembro de 2026](https://buzios.rj.gov.br/buzios-realiza-campanha-de-vacinacao-antirrabica-no-dia-26/). As equipes, seus identificadores e os volumes de produção continuam sintéticos. Não é um levantamento completo da rede municipal.
 

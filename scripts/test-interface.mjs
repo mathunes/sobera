@@ -8,8 +8,8 @@ const server = await createServer({ server: { middlewareMode: true }, appType: "
 try {
   const { AppRouter } = await server.ssrLoadModule("/src/router.tsx")
   const cases = [
-    ["/portal-atencao-basica/dashboard", ["Visão geral da APS", "Prioridades para a gestão", "47,0%", "Insights da APS", "C1 por equipe", "Marina Oliveira"]],
-    ["/portal-atencao-basica/indicadores", ["C1, Mais acesso à APS", "Histórico mensal", "Metodologia e faixas oficiais"]],
+    ["/portal-atencao-basica/dashboard", ["Visão geral da APS", "Prioridades para a gestão", "47,0%", "Insights da APS", "Mais acesso (C1) por equipe", "Marina Oliveira"]],
+    ["/portal-atencao-basica/indicadores", ["Mais acesso (C1)", "Histórico mensal", "Metodologia e faixas oficiais"]],
     ["/portal-atencao-basica/indicadores?equipe=norte-1", ["Equipe Ferradura I", "80,0%", "Verificar acolhimento"]],
     ["/portal-atencao-basica/indicadores?equipe=sul-2", ["Sem dados", "Recorte incompleto"]],
     ["/portal-atencao-basica/indicadores?equipe=inexistente", ["Equipe indisponível neste recorte"]],

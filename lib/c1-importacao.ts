@@ -1,22 +1,22 @@
-import { calcularC1, type BaseC1, type EquipeAps, type ProducaoC1 } from "./aps-indicadores"
+import { calcularC1, contagem, NOME_INDICADOR_C1, type BaseC1, type EquipeAps, type ProducaoC1 } from "./aps-indicadores"
 
 export const LIMITE_ARQUIVO = 10 * 1024 * 1024
 export const LIMITE_LINHAS = 20000
-export const VERSAO_C1 = "C1, SEI 0054814890, junho/2026"
+export const VERSAO_C1 = `${NOME_INDICADOR_C1}, SEI 0054814890, junho/2026`
 export const CAMPOS_C1 = [
   { id: "competencia", label: "Competência mensal", obrigatorio: true, aliases: ["competencia", "competencia atendimento", "mes ano", "ano mes"] },
   { id: "ine", label: "INE da equipe", obrigatorio: true, aliases: ["ine", "codigo ine", "nu ine", "co ine"] },
   { id: "cnes", label: "CNES da unidade", obrigatorio: true, aliases: ["cnes", "codigo cnes", "co cnes", "nu cnes"] },
   { id: "tipo", label: "Tipo de equipe (eSF / eAP)", obrigatorio: true, aliases: ["tipo equipe", "tipo de equipe", "tipo", "co tipo equipe"] },
-  { id: "programados", label: "Programados / numerador C1", obrigatorio: true, aliases: ["numerador", "nm", "programados", "atendimentos programados", "numerador c1"] },
-  { id: "total", label: "Total de atendimentos / denominador C1", obrigatorio: true, aliases: ["denominador", "dn", "total", "total atendimentos", "denominador c1"] },
+  { id: "programados", label: "Atendimentos programados (numerador)", obrigatorio: true, aliases: ["numerador", "nm", "programados", "atendimentos programados", "numerador c1"] },
+  { id: "total", label: "Total de atendimentos (denominador)", obrigatorio: true, aliases: ["denominador", "dn", "total", "total atendimentos", "denominador c1"] },
   { id: "equipe", label: "Nome da equipe", aliases: ["equipe", "nome equipe", "nome da equipe", "no equipe", "nm equipe"] },
   { id: "unidade", label: "Nome da unidade", aliases: ["unidade", "ubs", "nome unidade", "nome da unidade", "estabelecimento", "no estabelecimento"] },
   { id: "municipio", label: "Município", aliases: ["municipio", "nome municipio", "no municipio", "nm municipio"] },
   { id: "codigoMunicipio", label: "Código IBGE do município", aliases: ["codigo municipio", "co municipio", "codigo ibge", "ibge"] },
   { id: "indicador", label: "Indicador (para arquivos com mais de um)", aliases: ["indicador", "nome indicador", "codigo indicador"] },
   { id: "espontaneos", label: "Espontâneos (conferência opcional)", aliases: ["espontaneos", "atendimentos espontaneos"] },
-  { id: "resultado", label: "C1 publicado em % (conferência opcional)", aliases: ["resultado", "percentual", "c1", "pontuacao", "resultado c1"] },
+  { id: "resultado", label: `${NOME_INDICADOR_C1} publicado em % (conferência opcional)`, aliases: ["resultado", "percentual", "c1", "pontuacao", "resultado c1"] },
 ] as const
 export type CampoC1 = typeof CAMPOS_C1[number]["id"]
 export type MapeamentoC1 = Partial<Record<CampoC1, string>>
@@ -177,7 +177,7 @@ export function validarImportacao(csv: ArquivoCsv, mapa: MapeamentoC1, meta: Met
       else {
         registro.resultadoPublicado = publicado
         const calculado = calcularC1(registro.programados, registro.espontaneos)
-        if (calculado === null || Math.abs(publicado - calculado) > 0.11) avisos.push({ linha: linha.numero, mensagem: "C1 publicado diverge do recálculo. O painel usará numerador e denominador; confira o relatório e o mapeamento." })
+        if (calculado === null || Math.abs(publicado - calculado) > 0.11) avisos.push({ linha: linha.numero, mensagem: `O valor publicado de ${NOME_INDICADOR_C1} diverge do recálculo. Confira os volumes e as colunas mapeadas.` })
       }
     }
     equipes.set(ine, equipe)
@@ -186,11 +186,11 @@ export function validarImportacao(csv: ArquivoCsv, mapa: MapeamentoC1, meta: Met
   }
   if (municipios.size > 1 || codigos.size > 1) erro("O arquivo contém mais de um município. Exporte ou filtre um município por base.")
   if (municipios.size === 1 && !municipios.has(normalizarTexto(meta.municipio))) erro("O município informado não corresponde ao município do arquivo.")
-  if (!producao.length) erro("Nenhum registro C1 mensal válido encontrado.")
-  if (ignoradas) avisos.push({ mensagem: `${ignoradas} linha(s) de outros indicadores foram ignoradas.` })
+  if (!producao.length) erro(`Nenhum registro mensal válido de ${NOME_INDICADOR_C1} foi encontrado.`)
+  if (ignoradas) avisos.push({ mensagem: `${contagem(ignoradas, "linha ignorada por pertencer a outro indicador", "linhas ignoradas por pertencerem a outros indicadores")}.` })
   if (semNome) avisos.push({ mensagem: "Nomes ausentes: equipes/unidades serão identificadas por INE/CNES." })
   const zerados = producao.filter(r => r.programados + r.espontaneos === 0).length
-  if (zerados) avisos.push({ mensagem: `${zerados} registro(s) com total zerado ficarão sem resultado de C1.` })
+  if (zerados) avisos.push({ mensagem: `${contagem(zerados, "registro sem resultado", "registros sem resultado")} porque o total de atendimentos é zero.` })
   if (!mapa.municipio && !mapa.codigoMunicipio) avisos.push({ mensagem: "Sem coluna de município: a identificação municipal depende da informação fornecida nesta importação." })
   const meses = [...new Set(producao.map(r => r.competencia))].sort()
   if (erros.length) return { base: null, erros, avisos, ignoradas }

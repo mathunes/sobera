@@ -2,6 +2,7 @@ export type FaixaC1 = "Ótimo" | "Bom" | "Suficiente" | "Regular" | "Sem dados"
 export type DirecaoC1 = "abaixo" | "acima" | "equilibrio" | "sem-dados"
 
 export const MUNICIPIO_DEMO = "Armação dos Búzios, RJ"
+export const NOME_INDICADOR_C1 = "Mais acesso (C1)"
 export const COMPETENCIAS = ["2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09"]
 export const FONTE_C1 = "https://www.gov.br/saude/pt-br/composicao/saps/publicacoes/fichas-tecnicas/equipe-de-atencao-primaria-e-saude-da-familia/nota-metodologica-c1-mais-acesso/@@download/file"
 export const FAIXAS_C1: FaixaC1[] = ["Ótimo", "Bom", "Suficiente", "Regular", "Sem dados"]
@@ -160,6 +161,7 @@ export function formatarCompetencia(valor: string) {
 }
 
 export const numero = (n: number) => new Intl.NumberFormat("pt-BR").format(n)
+export const contagem = (n: number, singular: string, plural: string) => `${numero(n)} ${n === 1 ? singular : plural}`
 export const percentual = (n: number | null) => n === null ? "Sem dados" : `${n.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
 
 export function orientacaoC1(valor: number | null) {

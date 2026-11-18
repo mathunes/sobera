@@ -32,7 +32,7 @@ await comNavegador(async ({ command, avaliar, esperar, clicar, carregarArquivo, 
   await clicar('[...document.querySelectorAll("button[role=combobox]")][1]')
   await esperar('document.querySelectorAll("[role=option]").length > 0')
   await clicar('[...document.querySelectorAll("[role=option]")].find(e=>e.textContent==="UBS Centro")')
-  await esperar('document.body.innerText.includes("1 equipe(s) encontrada(s)")')
+  await esperar('document.body.innerText.includes("1 equipe encontrada")')
   await clicar('[...document.querySelectorAll("a")].find(e=>e.textContent.includes("Analisar equipe"))')
   await esperar('document.body.innerText.includes("60,0%") && document.body.innerText.includes("Histórico mensal")')
   assert.ok(await avaliar('location.search.includes("equipe=0000000001")'))

@@ -93,7 +93,7 @@ export function atualizarAcao(gestao: GestaoMunicipal, dados: DadosAcao, agora =
   let evento = !existente ? "Ação criada." : statusMudou ? `Status alterado: ${existente.status} → ${dados.status}.` : "Ação atualizada."
   if (existente && existente.prazo !== dados.prazo) evento += ` Prazo: ${existente.prazo} → ${dados.prazo}.`
   if (existente && existente.responsavelId !== dados.responsavelId) evento += ` Responsável: ${existente.responsavelNome} → ${responsavel.nome}.`
-  if (dados.status === "Concluída") evento += `\nRevisão ${dados.revisao!.competencia}, C1 ${dados.revisao!.valor === null ? "sem resultado" : dados.revisao!.valor + "%"}: ${dados.revisao!.observacao.trim()}`
+  if (dados.status === "Concluída") evento += `\nRevisão ${dados.revisao!.competencia}, Mais acesso (C1) ${dados.revisao!.valor === null ? "sem resultado" : dados.revisao!.valor + "%"}: ${dados.revisao!.observacao.trim()}`
   const historico = [...(existente?.historico ?? []), { id: crypto.randomUUID(), texto: evento + (dados.observacao?.trim() ? ` ${dados.observacao.trim()}` : ""), data: agora }]
   const acao = acaoSchema.parse({
     id: existente?.id ?? crypto.randomUUID(), titulo: dados.titulo.trim(), descricao: dados.descricao.trim(),

@@ -25,7 +25,7 @@ export function analisarVariacao(equipes: EquipeAps[], competencia: string, base
   if (delta !== null && programados && espontaneos && total) {
     const movimento = (n: number) => n > 0 ? "aumentaram" : n < 0 ? "diminuíram" : "permaneceram estáveis"
     leitura = `Os programados ${movimento(programados.absoluta)} e os espontâneos ${movimento(espontaneos.absoluta)}. `
-    leitura += delta > 0 && total.absoluta < 0 ? "O C1 aumentou enquanto o total caiu. Verifique oferta, procura e registros antes de interpretar como melhora do acesso." : "Leia a mudança do percentual junto aos dois volumes; ela descreve a composição dos atendimentos, sem explicar sozinha suas causas."
+    leitura += delta > 0 && total.absoluta < 0 ? "O percentual aumentou enquanto o total caiu. Verifique oferta, procura e registros antes de interpretar como melhora do acesso." : "Leia a mudança do percentual junto aos dois volumes; ela descreve a composição dos atendimentos, sem explicar sozinha suas causas."
   }
   return { anterior, comparaveis, atual, passado, delta, programados, espontaneos, total, leitura }
 }

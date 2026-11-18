@@ -43,7 +43,7 @@ Os blocos de citação contêm o texto para leitura. As instruções de navegaç
 
 ## 3. Insights para a gestão
 
-**Ação:** volte ao card Insights da APS. Clique na seta para mostrar outra sugestão.
+**Ação:** clique em **Expandir** na seção Insights da APS. Use a seta do carrossel para mostrar outra sugestão.
 
 > O SOBERA também apresenta sugestões para ajudar a interpretar os resultados. Cada sugestão traz a evidência encontrada, uma interpretação e uma próxima verificação.
 >
