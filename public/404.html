@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Carregando SOBERA</title>
+    <script>
+      const base = '/sobera/'
+      const rota = window.location.pathname + window.location.search + window.location.hash
+      window.location.replace(base + '?__sobera_rota=' + encodeURIComponent(rota))
+    </script>
+  </head>
+  <body>Carregando SOBERA...</body>
+</html>

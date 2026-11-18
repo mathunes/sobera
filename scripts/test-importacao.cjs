@@ -1,0 +1,118 @@
+const assert = require("node:assert/strict")
+const fs = require("node:fs")
+const path = require("node:path")
+const { createRequire } = require("node:module")
+const ts = require("typescript")
+const cache = new Map()
+function load(filename) {
+  filename = path.resolve(__dirname, filename)
+  if (cache.has(filename)) return cache.get(filename).exports
+  const module = { exports: {} }; cache.set(filename, module)
+  const source = ts.transpileModule(fs.readFileSync(filename, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
+  const external = createRequire(filename)
+  const requireFromFile = name => name.startsWith(".") ? load(path.resolve(path.dirname(filename), name + ".ts")) : external(name)
+  new Function("exports", "module", "require", source)(module.exports, module, requireFromFile)
+  return module.exports
+}
+const imp = load("../lib/c1-importacao.ts")
+const c1 = load("../lib/aps-indicadores.ts")
+const storage = load("../lib/c1-storage.ts")
+const modelo = fs.readFileSync(path.resolve(__dirname, "../public/exemplos/c1-modelo.csv"), "utf8")
+const meta = { municipio: "Município de exemplo", fonte: "Arquivo de teste", arquivo: "teste.csv", sha256: "a".repeat(64) }
+function revisar(texto, extra = {}, mapaExtra = {}) {
+  const csv = imp.lerCsv(texto)
+  return imp.validarImportacao(csv, { ...imp.sugerirMapeamento(csv.cabecalhos), ...mapaExtra }, { ...meta, ...extra })
+}
+const revisao = revisar(modelo)
+assert.deepEqual(revisao.erros, [])
+assert.ok(revisao.base)
+const base = revisao.base
+assert.equal(base.equipes.length, 2)
+assert.equal(base.producao.length, 4)
+assert.equal(base.equipes[0].ine, "0000000001")
+assert.equal(c1.resumoC1(base.equipes, "2026-09", base).valor, 860 / 1500 * 100)
+assert.equal(c1.resultadoEquipe("0000000001", "2026-09", base).valor, 62)
+assert.equal(c1.resultadoEquipe("centro-1", "2026-09", base).valor, null) // Não mistura com demo.
+assert.equal(base.producao[0].resultadoPublicado, 60)
+assert.deepEqual(storage.validarBasePersistida(base).producao, base.producao)
+const rejeita = (texto, trecho, extra = {}, mapa = {}) => {
+  const r = revisar(texto, extra, mapa)
+  assert.equal(r.base, null)
+  assert.ok(r.erros.some(e => e.mensagem.includes(trecho)), JSON.stringify(r.erros))
+}
+rejeita(modelo + modelo.split("\n")[1] + "\n", "duplicados")
+rejeita(modelo.replace(";600;1000;60", ";1001;1000;60"), "maior que")
+rejeita(modelo.replace(";600;1000;60", ";;1000;60"), "inteiros")
+rejeita(modelo.replace(";600;1000;60", ";-1;1000;60"), "inteiros")
+rejeita(modelo.replace(";600;1000;60", ";6,5;1000;60"), "inteiros")
+rejeita(modelo.replace("0000000001", "1"), "INE")
+rejeita(modelo.replace(";0000001;", ";1;"), "CNES")
+rejeita(modelo.replace(";eSF;", ";eSB;"), "Tipo de equipe")
+rejeita(modelo.replace("2026-08", "Q2/2026"), "Competência inválida")
+rejeita(modelo.replace("2026-08", "2026-13"), "Competência inválida")
+rejeita(modelo.replace("Município de exemplo;", "Outro município;"), "mais de um município")
+rejeita(modelo, "não corresponde", { municipio: "Outro" })
+rejeita(modelo, "Data de extração", { dataExtracao: "2026-99-01" })
+rejeita(modelo, "Data de extração", { dataExtracao: "2026-02-30" })
+rejeita(modelo, "mais de um campo", {}, { total: "Numerador" })
+const divergente = revisar(modelo.replace(";600;1000;60", ";600;1000;80"))
+assert.ok(divergente.base)
+assert.ok(divergente.avisos.some(a => a.mensagem.includes("diverge")))
+const zerada = revisar(modelo.replace(";600;1000;60", ";0;0;"))
+assert.ok(zerada.base)
+assert.equal(c1.resultadoEquipe("0000000001", "2026-08", zerada.base).faixa, "Sem dados")
+const misturada = revisar(modelo + modelo.split("\n")[1].replace(";C1;", ";C2;") + "\n")
+assert.ok(misturada.base)
+assert.equal(misturada.ignoradas, 1)
+const faltante = revisar(modelo.replaceAll("2026-09", "2026-10"))
+assert.deepEqual(faltante.base.competencias, ["2026-08", "2026-09", "2026-10"])
+assert.equal(c1.resultadoEquipe("0000000002", "2026-09", faltante.base).registro, undefined)
+assert.equal(c1.persistenciaC1("0000000002", "2026-10", faltante.base), 1)
+const mudou = revisar(modelo.replace('2026-09;0000000001;0000001;eSF;Equipe Centro;UBS Centro', '2026-09;0000000001;0000003;eSF;Equipe Centro;UBS Leste')).base
+assert.equal(c1.equipesNaCompetencia(mudou, "2026-08")[0].cnes, "0000001")
+assert.equal(c1.equipesNaCompetencia(mudou, "2026-09")[0].cnes, "0000003")
+const unica = revisar(modelo, { competenciaFixa: "2026-08" }, { competencia: undefined })
+assert.equal(unica.base, null) // Meses diferentes tornam-se duplicatas, não são somados.
+const semMes = modelo.split("\n").slice(0, 3).map(l => l.slice(l.indexOf(";") + 1)).join("\n")
+assert.ok(revisar(semMes, { competenciaFixa: "2026-08" }).base)
+const csv = imp.lerCsv('\uFEFFsep=;\r\nNome;Valor\r\n"UBS; Centro";"uma ""aspas"""\r\n"duas\nlinhas";2\r\n')
+assert.equal(csv.linhas[0].valores[0], "UBS; Centro")
+assert.equal(csv.linhas[0].valores[1], 'uma "aspas"')
+assert.equal(csv.linhas[1].valores[0], "duas\nlinhas")
+assert.equal(imp.lerCsv('A,B\n"a,b",2').separador, ",")
+assert.equal(imp.lerCsv("A\tB\n1\t2").separador, "\t")
+assert.throws(() => imp.lerCsv('A;B\n"sem fechar;1'), /aspas/)
+assert.throws(() => imp.lerCsv("A;A\n1;2"), /duplicados/)
+assert.throws(() => imp.lerCsv("A;B\n1"), /quantidade/)
+assert.equal(imp.inteiroCsv("1.234"), 1234)
+assert.equal(imp.inteiroCsv("1e3"), null)
+assert.equal(imp.inteiroCsv("9007199254740992"), null)
+assert.equal(imp.normalizarCompetencia("09/2026"), "2026-09")
+assert.equal(imp.normalizarCompetencia("202609"), "2026-09")
+let salvo = null
+const memoria = { getItem: () => salvo, setItem: (_, value) => { salvo = value } }
+storage.salvarBaseC1(base, memoria)
+assert.equal(storage.carregarBaseC1(memoria).base.municipio, meta.municipio)
+assert.equal(storage.carregarBaseC1(memoria).base.producao.length, 4)
+const anterior = salvo
+assert.throws(() => storage.salvarBaseC1(base, { setItem: () => { throw new Error("QuotaExceeded") } }))
+assert.equal(salvo, anterior)
+salvo = '{"invalido":true}'
+assert.ok(storage.carregarBaseC1(memoria).erro)
+assert.equal(storage.carregarBaseC1(memoria).base, c1.BASE_DEMO)
+const duplicada = { ...base, producao: [...base.producao, base.producao[0]] }
+assert.throws(() => storage.validarBasePersistida(duplicada))
+console.log("Importação C1: CSV, mapeamento, validações, vínculos históricos, recálculo e persistência verificados.")
+
+const insights = load("../lib/c1-insights.ts")
+const sugestoes = insights.gerarInsightsC1(c1.BASE_DEMO.equipes, "2026-09", c1.BASE_DEMO)
+assert.equal(sugestoes.length, 6)
+assert.equal(sugestoes[0].direcao, "sem-dados")
+assert.ok(sugestoes.some(s => s.direcao === "acima" && s.acao.includes("acolhimento")))
+assert.ok(sugestoes.some(s => s.direcao === "abaixo" && s.acao.includes("agenda")))
+assert.ok(sugestoes.every(s => s.acao.length > 30 && s.evidencia.length > 10))
+const equipeQueda = c1.BASE_DEMO.equipes[0]
+const baseQueda = { ...c1.BASE_DEMO, equipes: [equipeQueda], producao: [{ equipeId: equipeQueda.id, competencia: "2026-08", programados: 400, espontaneos: 600 }, { equipeId: equipeQueda.id, competencia: "2026-09", programados: 400, espontaneos: 200 }] }
+assert.ok(insights.gerarInsightsC1([equipeQueda], "2026-09", baseQueda)[0].titulo.includes("queda de volume"))
+assert.deepEqual(insights.gerarInsightsC1([], "2026-09", baseQueda), [])
+console.log("Insights C1: evidências, direções, dados ausentes e queda de volume verificados.")
